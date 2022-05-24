@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Mangashelf{% endblock %}
+{% block content %}
+<h1>Welcome, {{user.username}}!</h1>
+
+<h2>Search Manga</h2>
+<form id="query-form" method="POST">
+    {{ queryform.hidden_tag() }}
+  
+    {% for field in queryform
+           if field.widget.input_type != 'hidden' %}
+  
+      <p>
+        {{ field.label }}
+        {{ field }}
+  
+        {% for error in field.errors %}
+          {{ error }}
+        {% endfor %}
+      </p>
+  
+    {% endfor %}
+  
+    <button type="submit">Submit</button>
+  </form>
+  <br>
+  <div>
+    <h2>Latest Manga Reviews</h2>
+    {% for review in reviews %}
+    <div>
+      <h3>{{review.manga.native_title}}</h3>
+      {% if review.manga.english_title %}
+      <h4>{{review.manga.english_title}}</h4>
+      {% endif %}
+    <img src="{{ review.manga.medium_image }}">
+    <h4>{{review.title}} Rating: {{review.rating}}/5</h4>
+    <h5>by {{review.user.username}}</h5>
+    <p>{{review.content}}</p>
+    <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
+    </div>
+    {% endfor %}
+  </div>
+  <h4><a href="/users/{{user.username}}">View your bookshelf</a></h4>
+{% endblock %}

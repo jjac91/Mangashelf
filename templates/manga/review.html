@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Reviewing{{ manga.native_title }}{% endblock %}
+{% block content %}
+<h1>Reviewing {{manga.native_title}}</h1>
+        {% if manga.english_title %}
+        <h2>{{manga.english_title}}</h2>
+        {% endif %}
+<form id="query-form" method="POST">
+    {{ form.hidden_tag() }}
+  
+    {% for field in form
+           if field.widget.input_type != 'hidden' %}
+  
+      <p>
+        {{ field.label }}
+        {{ field }}
+  
+        {% for error in field.errors %}
+          {{ error }}
+        {% endfor %}
+      </p>
+  
+    {% endfor %}
+  
+    <button type="submit">Submit</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Query Response{% endblock %}
+{% block content %}
+<h1>Results Page: {{response.data.Page.pageInfo.currentPage}}</h1>
+    {% for media in response.data.Page.media %}
+    <div>
+        <h4><a href="/manga/{{media.id}}">{{media.title.native}}</a></h4>
+        {% if media.title.english %}
+        <h5>{{media.title.english}}</h5>
+        {% endif %}
+        <img src={{media.coverImage.medium}}>
+    </div>
+    <br>
+    {% endfor %}
+    {% if response.data.Page.pageInfo.currentPage > 1 %}
+    <a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage - 1}}" class="btn btn-primary">Previous Page</a>
+    {% endif %}
+
+    {% if response.data.Page.pageInfo.hasNextPage == true %}
+<a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage + 1}}" class="btn btn-primary">Next Page</a>
+{% else %}
+<p>No more results!</p>
+{% endif %}
+
+{% endblock %}

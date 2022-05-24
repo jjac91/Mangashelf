@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}{{ user.username }}{% endblock %}
+{% block content %}
+<h1>{{ user.username }}'s Page</h1>
+<div>
+  <h2>Your bookmarks:</h2>
+{% for bookmark in user.bookmarks %}
+<div>
+  <h3>{{bookmark.manga.native_title}}</h3>
+        {% if bookmark.manga.english_title %}
+        <h4>{{bookmark.manga.english_title}}</h4>
+        {% endif %}
+  <img src="{{ bookmark.manga.medium_image }}">
+  <h5>Current Status: {{ bookmark.status }}</h5>
+  <h5>Current Chapter: {{ bookmark.chapter }}</h5>
+  <a href="/manga/{{bookmark.manga_id}}" class="btn btn-primary">Manga Details</a>
+</div>
+{% endfor %}
+<div>
+  <h2>Your Favorites:</h2>
+{% for favorite in user.favorites %}
+<div>
+  <h3>{{favorite.manga.native_title}}</h3>
+        {% if favorite.manga.english_title %}
+        <h4>{{favorite.manga.english_title}}</h4>
+        {% endif %}
+  <img src="{{ favorite.manga.medium_image }}">
+  <a href="/manga/{{favorite.manga_id}}" class="btn btn-primary">Manga Details</a>
+</div>
+{% endfor %}
+</div>
+<br>
+<div>
+  <h2>Your reviews:</h2>
+{% for review in user.reviews %}
+<div>
+  <h3>{{review.manga.native_title}}</h3>
+        {% if review.manga.english_title %}
+        <h4>{{review.manga.english_title}}</h4>
+        {% endif %}
+  <img src="{{ review.manga.medium_image }}">
+  <h4>{{review.title}} Rating: {{review.rating}}/5</h4>
+    <h5>by {{review.user.username}}</h5>
+    <p>{{review.content}}</p>
+  <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
+</div>
+{% endfor %}
+</div>
+<div>
+  <h2>Our Recommendations</h2>
+  <h3>
+   because you liked {{ random_favorite.native_title }}, you should consider these:
+  </h3>
+  {% for media in response.data.Page.media %}
+    <div>
+        <h4>{{media.title.native}}</h4>
+        {% if media.title.english %}
+        <h5>{{media.title.english}}</h5>
+        {% endif %}
+        <img src={{media.coverImage.medium}}>
+        <a href="/manga/{{media.id}}" class="btn btn-primary">Manga Details</a>
+    </div>
+    <br>
+    {% endfor %}
+<form>
+  <button formaction="/logout">
+    Logout
+  </button>
+</form>
+<br>
+<form>
+  <button formaction="/users/{{ user.username }}/delete" formmethod="POST">
+    Delete User
+  </button>
+</form>
+{% endblock %}

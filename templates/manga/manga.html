@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}{{response.data.Media.title.native}}{% endblock %}
+{% block content %}
+<h1>{{response.data.Media.title.native}}</h1>
+{% if response.data.Media.title.english %}
+<h2>{{response.data.Media.title.english}}</h2>
+{% endif %}
+<img src={{response.data.Media.coverImage.large}}>
+<p>{% if response.data.Media.description %}
+    {{response.data.Media.description}}
+    {% else %}
+      No description given
+    {% endif %}
+</p>
+<p>Genres:{% for genre in response.data.Media.genres %}
+  {{genre}} 
+  {% endfor %}
+</p>
+<p>Status: {{response.data.Media.status}}</p>
+{% if response.data.Media.chapters %}
+<p>Consists of {{response.data.Media.chapters}}
+    {% if response.data.Media.chapters > 1 %}
+     chapters
+     {% else %}
+      chapter
+      {% endif %}
+      {% if response.data.Media.volumes %} in {{response.data.Media.volumes}} volumes{% endif %}</p>
+{% endif %}
+
+<!-- if session['username'] -->
+<div>
+<form id="bookmark-form", method="POST", action="{{ url_for('handle_bookmark',manga_id=manga.id)}}">
+  {{ form.hidden_tag() }}
+
+  {% for field in form
+         if field.widget.input_type != 'hidden' %}
+
+    <p>
+      {{ field.label }}
+      {{ field }}
+
+      {% for error in field.errors %}
+        {{ error }}
+      {% endfor %}
+    </p>
+  {% endfor %}
+  <button type="submit">Submit</button>
+</form>
+</div>
+<!-- endif -->
+
+<a href="/manga/{{ manga.id }}/favorite" class="btn btn-primary">Favorite</a>
+<div>
+  <h2>User Reviews</h2>
+  {% for review in manga.reviews %}
+  <div>
+  <h4>{{review.title}}</h4>
+  <h5>Rating: {{review.rating}}/5</h5>
+  <h6>by {{review.user.username}}</h6>
+  <p>{{review.content}}</p>
+  {% if review.user.username == session['username'] %}
+    <a href="/manga/{{review.manga_id}}/review/update" class="btn btn-primary">Edit Review</a>
+    <a href="/manga/{{review.manga_id}}/delete/update" class="btn btn-primary">Delete Review</a>
+  {% endif %}
+  </div>
+  {% endfor %}
+</div>
+<a href="/manga/{{ manga.id }}/review" class="btn btn-primary">Click here to sumbit a review!</a>
+{% endblock %}
