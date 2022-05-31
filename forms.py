@@ -36,7 +36,7 @@ class BookmarkForm(FlaskForm):
     
     status= SelectField(
         "Your reading status:",
-        choices=[("Interested"),("In Progress"),("Finished"),("Dropped")]
+        choices=[(""),("Interested"),("In Progress"),("Finished"),("Dropped")]
     )
 
 class ReviewForm(FlaskForm):
@@ -45,7 +45,7 @@ class ReviewForm(FlaskForm):
         validators=[InputRequired(), Length(min=1, max=100)],
     )
     content = TextAreaField(
-        "Review",
+        "Review", render_kw={"rows": 20, "cols": 11},
         validators=[InputRequired()],
     )
 

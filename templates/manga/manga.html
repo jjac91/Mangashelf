@@ -1,69 +1,112 @@
 {% extends 'base.html' %}
 {% block title %}{{response.data.Media.title.native}}{% endblock %}
 {% block content %}
-<h1>{{response.data.Media.title.native}}</h1>
-{% if response.data.Media.title.english %}
-<h2>{{response.data.Media.title.english}}</h2>
-{% endif %}
-<img src={{response.data.Media.coverImage.large}}>
-<p>{% if response.data.Media.description %}
-    {{response.data.Media.description}}
-    {% else %}
-      No description given
-    {% endif %}
-</p>
-<p>Genres:{% for genre in response.data.Media.genres %}
-  {{genre}} 
-  {% endfor %}
-</p>
-<p>Status: {{response.data.Media.status}}</p>
-{% if response.data.Media.chapters %}
-<p>Consists of {{response.data.Media.chapters}}
-    {% if response.data.Media.chapters > 1 %}
-     chapters
-     {% else %}
-      chapter
-      {% endif %}
-      {% if response.data.Media.volumes %} in {{response.data.Media.volumes}} volumes{% endif %}</p>
-{% endif %}
-
-<!-- if session['username'] -->
-<div>
-<form id="bookmark-form", method="POST", action="{{ url_for('handle_bookmark',manga_id=manga.id)}}">
-  {{ form.hidden_tag() }}
-
-  {% for field in form
-         if field.widget.input_type != 'hidden' %}
-
-    <p>
-      {{ field.label }}
-      {{ field }}
-
-      {% for error in field.errors %}
-        {{ error }}
-      {% endfor %}
-    </p>
-  {% endfor %}
-  <button type="submit">Submit</button>
-</form>
-</div>
-<!-- endif -->
-
-<a href="/manga/{{ manga.id }}/favorite" class="btn btn-primary">Favorite</a>
-<div>
-  <h2>User Reviews</h2>
-  {% for review in manga.reviews %}
-  <div>
-  <h4>{{review.title}}</h4>
-  <h5>Rating: {{review.rating}}/5</h5>
-  <h6>by {{review.user.username}}</h6>
-  <p>{{review.content}}</p>
-  {% if review.user.username == session['username'] %}
-    <a href="/manga/{{review.manga_id}}/review/update" class="btn btn-primary">Edit Review</a>
-    <a href="/manga/{{review.manga_id}}/delete/update" class="btn btn-primary">Delete Review</a>
+<!--<div class="banner" style="background-image: url({{response.data.Media.bannerImage}}); background-repeat:no-repeat;">
+</div>-->
+<div class="container mx-auto p-3 py-md-5">
+  <h1 class="text-center">{{response.data.Media.title.native}}</h1>
+  {% if response.data.Media.title.english %}
+  <h2 class="text-center">{{response.data.Media.title.english}}</h2>
   {% endif %}
+  <div class="row container p-3">
+    <div class="col-lg-auto">
+      <img src={{response.data.Media.coverImage.large}} class="border border-dark">
+    </div>
+    <div class="col">
+      {% if response.data.Media.description %}
+      {{response.data.Media.description|safe}}
+      {% else %}
+      <p>No description given</p>
+      {% endif %}
+      </p>
+      <p>Genres:{% for genre in response.data.Media.genres %}
+        {{genre}}
+        {% endfor %}
+      </p>
+      <p>Status: {{response.data.Media.status}}</p>
+      {% if response.data.Media.chapters %}
+      <p>Consists of {{response.data.Media.chapters}}
+        {% if response.data.Media.chapters > 1 %}
+        chapters
+        {% else %}
+        chapter
+        {% endif %}
+        {% if response.data.Media.volumes %} in {{response.data.Media.volumes}} volumes{% endif %}</p>
+      {% endif %}
+    </div>
   </div>
-  {% endfor %}
+  <hr>
+  {% if form %}
+  <div>
+    <form id="bookmark-form" , method="POST">
+      <div class="row">
+        <div class="col-md-auto">
+          <h5 class="text-center">Your bookmark:</h5>
+        </div>
+        {{ form.hidden_tag() }}
+
+        {% for field in form
+        if field.widget.input_type != 'hidden' %}
+
+        <div class="col-md-auto">
+          {{ field.label(class_="text-center") }}
+        </div>
+        <div class="col-md-auto">
+          {{ field(class_="form-control") }}
+        </div>
+
+        {% for error in field.errors %}
+        {{ error }}
+        {% endfor %}
+        {% endfor %}
+        <div class="col-sm-auto">
+          <button class="btn btn-primary" type="submit">Submit</button>
+        </div>
+        <div class="col-sm-auto">
+          <form>
+            <button formaction="/manga/{{manga.id}}/bookmark/delete" formmethod="POST"
+              class="btn btn-primary">Delete Bookmark</button>
+          </form>
+        </div>
+      </div>
+    </form>
+  </div>
+  <hr>
+  {% endif %}
+  <div class="d-flex justify-content-center container p-3 d-inline">
+    <div class="p-3">
+      <a href="/manga/{{ manga.id }}/favorite" class="btn btn-primary">Favorite</a>
+    </div>
+    <div class="p-3">
+      <a href="/manga/{{ manga.id }}/review" class="btn btn-primary">Click here to submit a review!</a>
+    </div>
+  </div>
+  <div>
+    <h2>Reviews</h2>
+    {% for review in manga.reviews %}
+    <div>
+      <h4>{{review.title}}</h4>
+      <h5>Rating: {{review.rating}}/5</h5>
+      <h6>by {{review.user.username}}</h6>
+      <p style="white-space: pre-wrap;  word-wrap: break-word;">{{review.content|safe}}</p>
+      {% if review.user.username == session['username'] %}
+      <div class="row">
+        <div class="col-sm-auto"><a href="/manga/{{review.manga_id}}/review/update" class="btn btn-primary">Edit
+            Review</a>
+        </div>
+        <div class="col-sm-auto">
+          <form>
+            <button formaction="/manga/{{review.manga_id}}/review/delete" formmethod="POST"
+              class="btn btn-primary">Delete
+              Review</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
 </div>
-<a href="/manga/{{ manga.id }}/review" class="btn btn-primary">Click here to sumbit a review!</a>
+
 {% endblock %}

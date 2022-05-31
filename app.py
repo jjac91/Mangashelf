@@ -4,6 +4,7 @@ from flask import Flask, request, redirect, render_template, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from models import Bookmark, Review, db, connect_db, User, Manga, Genre, GenreTag, Favorite
 from forms import RegisterUserForm, LoginForm, QueryForm, BookmarkForm, ReviewForm
+from sqlalchemy.exc import IntegrityError
 import requests
 import random
 
@@ -53,7 +54,7 @@ def homepage():
             return render_template("home.html", user=user,reviews=reviews)
 
     else:
-            return render_template("anon-home.html")
+            return render_template("anon-home.html",reviews=reviews)
 
 ################################
 # User Routes
@@ -63,6 +64,7 @@ def homepage():
 def register():
     """provides a form for a user to register and handles its submission"""
     if "username" in session:
+        flash("User already logged in","danger")
         return redirect(f"/users/{session['username']}")
 
     form = RegisterUserForm()
@@ -74,13 +76,17 @@ def register():
         password = form.password.data
 
         user = User.register(username, password)
-
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            form.username.errors.append('Username already in use')
+            return render_template("users/register_user.html", form=form)
 
         session["username"] = user.username
+        flash("User registered","success")
         return redirect(f"/")
     else:
-        return render_template("users/register_user.html", form=form, queryform=queryform)
+        return render_template("users/register_user.html", form=form)
 
 
 @app.route("/users/<username>")
@@ -104,16 +110,19 @@ def user_details(username):
       id
       genres
       coverImage {
-        medium
+        large
       }
     }
     }
     }"""
     
     url = 'https://graphql.anilist.co'
-    if "username" not in session or username != session['username']:
+    if "username" not in session:
+        flash("You must be logged in to view a profile","danger")
+        return redirect("/login")
+    if username != session['username']:
+        flash("You can only view your own profile","danger")
         return redirect("/")
-
     user = User.query.filter(User.username == f"{username}").first()
     
     if user.favorites:
@@ -131,20 +140,28 @@ def user_details(username):
     variables={
         'genre_in':random_genre,
         'page':1}
-    jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    try:
+        jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    except requests.exceptions.RequestException as e:
+        flash("Unable to connect to database","danger") 
+        return redirect("/")
     response = jsonresponse.json()
     return render_template("users/user_details.html", user=user,random_favorite=random_favorite,random_genre=random_genre, response=response, queryform=queryform)
 
 @app.route("/users/<username>/delete", methods=["POST"])
 def delete_user(username):
-    if "username" not in session or username != session['username']:
-        return redirect("/")
+    if "username" not in session:
+        flash("Please login to delete your account","danger") 
+        redirect("/login")                         
+    if username != session['username']:
+        flash("Access Unauthorized","danger") 
+        redirect("/")      
 
     user = User.query.filter(User.username == f"{username}").first()
     db.session.delete(user)
     db.session.commit()
     session.pop("username")
-
+    flash("Account Deleted","success")
     return redirect("/")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -161,6 +178,7 @@ def login():
 
         if user:
             session["username"] = user.username
+            flash("Login Successful","success")
             return redirect(f"/users/{session['username']}")
         else:
             form.username.errors = ["Invalid Username or Password"]
@@ -172,7 +190,7 @@ def logout():
     """Logs user out and redirects to homepage."""
 
     session.pop("username")
-
+    flash("Logout Successful","success")
     return redirect("/")
 
 ##########
@@ -207,7 +225,7 @@ def queryresults():
                         romaji}
                     id
                     coverImage{
-                        medium} 
+                        large} 
                 }
 
             } 
@@ -216,23 +234,26 @@ def queryresults():
         'title':querytext,
         'page':page}
     url = 'https://graphql.anilist.co'
-    jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    try:
+        jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    except requests.exceptions.RequestException as e:
+        flash("Unable to connect to database","danger") 
+        return redirect("/")
     response = jsonresponse.json()
     return render_template("manga/queryresults.html",response=response, querytext=querytext, queryform=queryform)
 
 @app.route("/manga/<int:manga_id>", methods=["GET","POST"])
 def manga(manga_id):
-    if "username" in session:
-        username=session["username"]
-        user = User.query.filter(User.username == f"{username}").first()
-        existing_bookmark=Bookmark.query.get((user.id,manga_id))
-        if existing_bookmark:
-            bookmark_form=BookmarkForm(obj=existing_bookmark)
-        else:
-            bookmark_form=BookmarkForm()
-    else:
-            bookmark_form=BookmarkForm()
-
+    #if "username" in session:
+    #   username=session["username"]
+    #   user = User.query.filter(User.username == f"{username}").first()
+    #   existing_bookmark=Bookmark.query.get((user.id,manga_id))
+    #   if existing_bookmark:
+    #       bookmark_form=BookmarkForm(obj=existing_bookmark)
+    #   else:
+    #       bookmark_form=BookmarkForm()
+    #else:
+    #        bookmark_form=BookmarkForm()
     manga=Manga.query.get(manga_id)
     query="""query($id:Int){
         Media(id:$id,type:MANGA){
@@ -240,13 +261,15 @@ def manga(manga_id):
                 english
                 native}
             id
+            bannerImage
             coverImage{
+                extraLarge
                 large
                 medium}
             chapters
             volumes
             status
-            description
+            description(asHtml: true)
             genres
             staff(sort:[ROLE]) {
                     edges {
@@ -264,7 +287,11 @@ def manga(manga_id):
                 }"""
     variables={'id':manga_id}
     url = 'https://graphql.anilist.co'
-    jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    try:
+        jsonresponse = requests.post(url, json={'query': query, 'variables': variables})
+    except requests.exceptions.RequestException as e:
+        flash("Unable to connect to database","danger") 
+        return redirect("/")
     response = jsonresponse.json()
     
     if Manga.query.get(manga_id) == None:
@@ -301,6 +328,41 @@ def manga(manga_id):
             
     else:
         manga=Manga.query.get(manga_id)
+    
+    if "username" not in session:
+        return render_template("manga/manga.html",response=response, manga=manga)
+    
+    username=session["username"]
+    user = User.query.filter(User.username == f"{username}").first()
+    bookmark_form=BookmarkForm()
+    existing_bookmark=Bookmark.query.get((user.id,manga_id))
+    if existing_bookmark:
+           bookmark_form=BookmarkForm(obj=existing_bookmark)
+    else:
+           bookmark_form=BookmarkForm()
+    
+    if existing_bookmark:
+        if bookmark_form.validate_on_submit():
+            existing_bookmark.chapter = bookmark_form.chapter.data
+            existing_bookmark.status= bookmark_form.status.data
+            db.session.commit()
+            flash(f"Bookmark Updated","success")
+            return redirect(f"/manga/{manga_id}")
+    
+    if bookmark_form.validate_on_submit():
+        chapter = bookmark_form.chapter.data
+        status= bookmark_form.status.data
+
+        bookmark= Bookmark(
+            user_id=user.id,
+            manga_id=manga_id,
+            chapter=chapter,
+            status= status,
+        )
+        db.session.add(bookmark)
+        db.session.commit()
+        flash(f"Bookmark Created","success")
+        return redirect(f"/manga/{manga_id}")
 
     return render_template("manga/manga.html",response=response, form=bookmark_form,manga=manga)
 
@@ -311,7 +373,7 @@ def manga(manga_id):
 @app.route("/manga/<manga_id>/review", methods=["GET","POST"])
 def review_manga(manga_id):
     if "username" not in session:
-        flash(f"Please login to leave reviews")
+        flash(f"Please login to leave reviews","danger")
         return redirect("/login")
     manga=Manga.query.get(manga_id)
     form=ReviewForm()
@@ -321,7 +383,7 @@ def review_manga(manga_id):
                                          Review.manga_id == f"{manga_id}").first()
 
     if existing_review != None:
-        flash("Existing review detected, please edit it instead")
+        flash("Existing review detected, please edit it instead","info")
         return redirect(f"/manga/{manga_id}/review/update")
 
     if form.validate_on_submit():
@@ -338,6 +400,7 @@ def review_manga(manga_id):
         )
         db.session.add(review)
         db.session.commit()
+        flash("Review added","success")
         return redirect(f"/manga/{manga_id}")
     else:
         return render_template("manga/review.html",manga=manga, form=form)
@@ -345,7 +408,7 @@ def review_manga(manga_id):
 @app.route("/manga/<manga_id>/review/update", methods=["GET","POST"])
 def update_review(manga_id):
     if "username" not in session:
-        flash(f"Please login to edit reviews")
+        flash(f"Please login to edit reviews","danger")
         return redirect("/login")
     manga=Manga.query.get(manga_id)
     username=session["username"]
@@ -356,7 +419,7 @@ def update_review(manga_id):
     form=ReviewForm(obj=existing_review)
 
     if existing_review==None:
-        flash("No review detected, please create a review first")
+        flash("No review detected, please create a review first","danger")
         return redirect(f"/manga/{manga_id}/review")
 
     if form.validate_on_submit():
@@ -365,15 +428,55 @@ def update_review(manga_id):
         existing_review.rating=form.rating.data
 
         db.session.commit()
+        flash(f"Review updated","success")
         return redirect(f"/manga/{manga_id}")
     else:
         return render_template("manga/review.html",manga=manga, form=form)
 
+@app.route("/manga/<manga_id>/review/delete", methods=["GET","POST"])
+def delete_review(manga_id):
+    if "username" not in session:
+        flash(f"Please login to delete reviews","danger")
+        return redirect("/login")
+    username=session["username"]
+    user = User.query.filter(User.username == f"{username}").first()
+    existing_review= Review.query.filter(Review.user_id == f"{user.id}",
+                                         Review.manga_id == f"{manga_id}").first()
+
+    if existing_review==None:
+        flash("No review to delete","danger")
+        return redirect(f"/manga/{manga_id}")
+
+    db.session.delete(existing_review)
+    db.session.commit()
+    
+    flash(f"Review deleted","success")
+    return redirect(f"/manga/{manga_id}")
+
+@app.route("/manga/<manga_id>/bookmark/delete", methods=["POST","DELETE"])
+def delete_bookmark(manga_id):
+    if "username" not in session:
+        flash(f"Please login to delete bookmarks","danger")
+        return redirect("/login")
+    username=session["username"]
+    user = User.query.filter(User.username == f"{username}").first()
+    bookmark= Bookmark.query.get((user.id,manga_id))
+
+    if bookmark==None:
+        flash("No bookmark to delete","danger")
+        return redirect(f"/manga/{manga_id}")
+
+    db.session.delete(bookmark)
+    db.session.commit()
+    
+    flash(f"Bookmark deleted","success")
+    return redirect(f"/manga/{manga_id}")
+
 @app.route('/manga/<int:manga_id>/favorite',  methods=["GET","POST"])
 def handle_favorite(manga_id):
     """toggles the favorite status."""
-    if "username" not in session or username != session['username']:
-        flash("Please log in to favorite")
+    if "username" not in session:
+        flash(f"Please login to edit favorites","danger")
         return redirect("/login")
     username=session["username"]
     user = User.query.filter(User.username == f"{username}").first()
@@ -384,20 +487,20 @@ def handle_favorite(manga_id):
     if existing_favorite:
         db.session.delete(existing_favorite)
         db.session.commit()
-        flash("Favorite removed")
+        flash("Favorite removed","success")
         return redirect(f"/manga/{manga_id}")
     
     else:
         favorite = Favorite(user_id=user.id,manga_id=favorited_manga.id)
         db.session.add(favorite)
         db.session.commit()
-        flash("Favorite added")
+        flash("Favorite added","success")
         return redirect(f"/manga/{manga_id}")
     
 @app.route('/manga/<int:manga_id>/bookmark', methods=["GET","POST"])
 def handle_bookmark(manga_id):
     if "username" not in session:
-        flash(f"Please login to edit reviews")
+        flash(f"Please login to leave bookmarks","danger")
         return redirect("/login")
     username=session["username"]
     user = User.query.filter(User.username == f"{username}").first()
@@ -409,7 +512,7 @@ def handle_bookmark(manga_id):
             existing_bookmark.chapter = bookmark_form.chapter.data
             existing_bookmark.status= bookmark_form.status.data
             db.session.commit()
-            flash(f"Bookmark Updated")
+            flash(f"Bookmark Updated","success")
             return redirect(f"/manga/{manga_id}")
     
     if bookmark_form.validate_on_submit():
@@ -424,5 +527,6 @@ def handle_bookmark(manga_id):
         )
         db.session.add(bookmark)
         db.session.commit()
-        flash(f"Bookmark Created")
+        flash(f"Bookmark Created","success")
         return redirect(f"/manga/{manga_id}")
+

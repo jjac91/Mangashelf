@@ -1,44 +1,51 @@
 {% extends 'base.html' %}
 {% block title %}Mangashelf{% endblock %}
 {% block content %}
-<h1>Welcome, {{user.username}}!</h1>
+<div class="container mx-auto p-3 py-md-5">
+  <h1 class="text-center">Welcome, {{user.username}}!</h1>
+  <a class="nav justify-content-center" href="/users/{{user.username}}">View your bookshelf</a>
+  <div class="container p-3">
+    <h2>Search Manga</h2>
+    <form id="query-form" method="POST">
+      {{ queryform.hidden_tag() }}
 
-<h2>Search Manga</h2>
-<form id="query-form" method="POST">
-    {{ queryform.hidden_tag() }}
-  
-    {% for field in queryform
-           if field.widget.input_type != 'hidden' %}
-  
+      {% for field in queryform
+      if field.widget.input_type != 'hidden' %}
+
       <p>
-        {{ field.label }}
-        {{ field }}
-  
+        {{ field(class_="form-control") }}
+
         {% for error in field.errors %}
-          {{ error }}
+        {{ error }}
         {% endfor %}
       </p>
-  
-    {% endfor %}
-  
-    <button type="submit">Submit</button>
-  </form>
-  <br>
-  <div>
-    <h2>Latest Manga Reviews</h2>
-    {% for review in reviews %}
-    <div>
-      <h3>{{review.manga.native_title}}</h3>
-      {% if review.manga.english_title %}
-      <h4>{{review.manga.english_title}}</h4>
-      {% endif %}
-    <img src="{{ review.manga.medium_image }}">
-    <h4>{{review.title}} Rating: {{review.rating}}/5</h4>
-    <h5>by {{review.user.username}}</h5>
-    <p>{{review.content}}</p>
-    <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
-    </div>
-    {% endfor %}
+
+      {% endfor %}
+
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
   </div>
-  <h4><a href="/users/{{user.username}}">View your bookshelf</a></h4>
+  <hr>
+  <div class="container p-3 ">
+    <h2>Latest Manga Reviews</h2>
+    <div class="row row-cols-5">
+      {% for review in reviews %}
+      <div class="container p-1">
+        <div class="card text-bg-light">
+          <img src="{{ review.manga.large_image }}" class="img-fluid border border-dark">
+          <div class="card-body ">
+            <h5 class="card-title">{{review.manga.native_title}}</h5>
+            {% if review.manga.english_title %}
+            <h5 class="card-title">{{review.manga.english_title}}</h5>
+            {% endif %}
+            <h6>{{review.title}} Rating: {{review.rating}}/5 </h6>
+            <h6>by {{review.user.username}}</h6>
+            <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}

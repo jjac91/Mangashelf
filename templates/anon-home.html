@@ -1,11 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-  <div class="home-hero">
-    <h1>Welcome to Mangashelf</h1>
-    <h4>First time visitor?</h4>
-    <p>Sign up now to leave your reviews!</p>
-    <a href="/register" class="btn btn-primary">Sign up</a>
-    <p>Or login here if you've already regisered</p>
+<body>
+<div class="container mx-auto p-3 py-md-5 text-center">
+  <main class="mx-auto px-3">
+    <h1 class="mx-auto">Welcome to Mangashelf</h1>
+    <div class="container">
+      <h4>First time visitor?</h4>
+      <p>Sign up now to leave your reviews!</p>
+      <a href="/register" class="btn btn-primary">Sign up</a>
+    </div>
+    <br>
+    <div class="container">
+    <p>Or login here if you've already registered</p>
     <a href="/login" class="btn btn-primary">Login</a>
   </div>
+  <hr>
+  <div class="container p-3 ">
+    <h2>Latest Manga Reviews</h2>
+    <div class="row row-cols-5">
+    {% for review in reviews %}
+    <div class="container p-1">
+      <div class="card text-bg-light">
+          <img src="{{ review.manga.large_image }}" class="img-fluid border border-dark">
+          <div class="card-body ">
+            <h5 class="card-title">{{review.manga.native_title}}</h5>
+              {% if review.manga.english_title %}
+              <h5 class="card-title">{{review.manga.english_title}}</h5>
+                {% endif %}
+                <h6>{{review.title}} Rating: {{review.rating}}/5</h6>
+            <h6>by {{review.user.username}}</h6>
+              <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  </main>
+</div>
+</body>
 {% endblock %}

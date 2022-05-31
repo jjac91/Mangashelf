@@ -1,76 +1,131 @@
 {% extends 'base.html' %}
 {% block title %}{{ user.username }}{% endblock %}
 {% block content %}
-<h1>{{ user.username }}'s Page</h1>
-<div>
-  <h2>Your bookmarks:</h2>
-{% for bookmark in user.bookmarks %}
-<div>
-  <h3>{{bookmark.manga.native_title}}</h3>
-        {% if bookmark.manga.english_title %}
-        <h4>{{bookmark.manga.english_title}}</h4>
-        {% endif %}
-  <img src="{{ bookmark.manga.medium_image }}">
-  <h5>Current Status: {{ bookmark.status }}</h5>
-  <h5>Current Chapter: {{ bookmark.chapter }}</h5>
-  <a href="/manga/{{bookmark.manga_id}}" class="btn btn-primary">Manga Details</a>
-</div>
-{% endfor %}
-<div>
-  <h2>Your Favorites:</h2>
-{% for favorite in user.favorites %}
-<div>
-  <h3>{{favorite.manga.native_title}}</h3>
-        {% if favorite.manga.english_title %}
-        <h4>{{favorite.manga.english_title}}</h4>
-        {% endif %}
-  <img src="{{ favorite.manga.medium_image }}">
-  <a href="/manga/{{favorite.manga_id}}" class="btn btn-primary">Manga Details</a>
-</div>
-{% endfor %}
-</div>
-<br>
-<div>
-  <h2>Your reviews:</h2>
-{% for review in user.reviews %}
-<div>
-  <h3>{{review.manga.native_title}}</h3>
-        {% if review.manga.english_title %}
-        <h4>{{review.manga.english_title}}</h4>
-        {% endif %}
-  <img src="{{ review.manga.medium_image }}">
-  <h4>{{review.title}} Rating: {{review.rating}}/5</h4>
-    <h5>by {{review.user.username}}</h5>
-    <p>{{review.content}}</p>
-  <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
-</div>
-{% endfor %}
-</div>
-<div>
-  <h2>Our Recommendations</h2>
-  <h3>
-   because you liked {{ random_favorite.native_title }}, you should consider these:
-  </h3>
-  {% for media in response.data.Page.media %}
-    <div>
-        <h4>{{media.title.native}}</h4>
-        {% if media.title.english %}
-        <h5>{{media.title.english}}</h5>
-        {% endif %}
-        <img src={{media.coverImage.medium}}>
-        <a href="/manga/{{media.id}}" class="btn btn-primary">Manga Details</a>
+<div class="container mx-auto p-3 py-md-5">
+  <h1 class="text-center">{{ user.username }}'s Bookshelf</h1>
+
+  <div class="container p-3">
+    <h2>Your bookmarks:</h2>
+    {% if user.bookmarks %}
+    <div class="row row-cols-5">
+      {% for bookmark in user.bookmarks %}
+      <div class="container p-1">
+        <div class="card text-bg-light">
+          <img src="{{ bookmark.manga.large_image }}" class="img-fluid border border-dark">
+          <div class="card-body">
+            <h5 class="card-title">{{bookmark.manga.native_title}}</h5>
+            {% if bookmark.manga.english_title %}
+            <h5 class="card-title">{{bookmark.manga.english_title}}</h5>
+            {% endif %}
+            <h6>Current Status: {{ bookmark.status }}</h6>
+            <h6>Current Chapter: {{ bookmark.chapter }}</h6>
+            <a href="/manga/{{bookmark.manga_id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    <br>
-    {% endfor %}
-<form>
-  <button formaction="/logout">
-    Logout
-  </button>
-</form>
-<br>
-<form>
-  <button formaction="/users/{{ user.username }}/delete" formmethod="POST">
-    Delete User
-  </button>
-</form>
-{% endblock %}
+  </div>
+  {% else %}
+  <div class="container p-3">
+    <p>No bookmarks yet!</p>
+  </div>
+  {% endif %}
+
+  <hr>
+
+  
+    <h2>Your Favorites:</h2>
+    <div class="container p-3">
+    {% if user.favorites %}
+    <div class="row row-cols-5">
+      {% for favorite in user.favorites %}
+      <div class="container p-1">
+        <div class="card text-bg-light">
+          <img src="{{ favorite.manga.large_image }}" class="img-fluid border border-dark">
+          <div class="card-body">
+            <h5 class="card-title">{{favorite.manga.native_title}}</h5>
+            {% if favorite.manga.english_title %}
+            <h5 class="card-title">{{favorite.manga.english_title}}</h5>
+            {% endif %}
+            <a href="/manga/{{favorite.manga_id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+    <p>No favorites yet!</p>
+  </div>
+  {% endif %}
+
+  <hr>
+
+    <h2>Your reviews:</h2>
+    <div class="container p-3">
+    {% if user.reviews %}
+    <div class="row row-cols-5">
+      {% for review in user.reviews %}
+      <div class="container p-1">
+        <div class="card text-bg-light">
+          <img src="{{ review.manga.large_image }}" class="img-fluid border border-dark">
+          <div class="card-body">
+            <h5 class="card-title">{{review.manga.native_title}}</h5>
+            {% if review.manga.english_title %}
+            <h5 class="card-title">{{review.manga.english_title}}</h5>
+            {% endif %}
+            <h6>{{review.title}} Rating: {{review.rating}}/5</h6>
+            <h6>by {{review.user.username}}</h6>
+            <a href="/manga/{{review.manga_id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+    <p>No favorites yet!</p>
+  </div>
+  {% endif %}
+
+  <hr>
+
+  {% if user.favorites %}
+  <div class="container p-3">
+    <h2>Our Recommendations:</h2>
+    <p>
+      because you liked
+      {% if random_favorite.english_title %}
+      {{ random_favorite.english_title}}
+      {% else %}
+      {{ random_favorite.native_title }}
+      {% endif %}
+      , you should consider these:
+    </p>
+    <div class="row row-cols-5">
+      {% for media in response.data.Page.media %}
+      <div class="container p-1">
+        <div class="card text-bg-light">
+          <img src={{media.coverImage.large}} class="img-fluid border border-dark">
+          <div class="card-body">
+            <h5 class="card-title">{{media.title.native}}</h5>
+            {% if media.title.english %}
+            <h5 class="card-title">{{media.title.english}}</h5>
+            {% endif %}
+            <a href="/manga/{{media.id}}" class="btn btn-primary">Manga Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <hr>
+    {% endif %}
+
+    <form>
+      <button class="btn btn-primary" formaction="/users/{{ user.username }}/delete" formmethod="POST">
+        Delete User
+      </button>
+    </form>
+  </div>
+  {% endblock %}

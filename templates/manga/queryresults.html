@@ -1,25 +1,47 @@
 {% extends 'base.html' %}
 {% block title %}Query Response{% endblock %}
 {% block content %}
-<h1>Results Page: {{response.data.Page.pageInfo.currentPage}}</h1>
-    {% for media in response.data.Page.media %}
-    <div>
-        <h4><a href="/manga/{{media.id}}">{{media.title.native}}</a></h4>
-        {% if media.title.english %}
-        <h5>{{media.title.english}}</h5>
-        {% endif %}
-        <img src={{media.coverImage.medium}}>
+<div class="container mx-auto p-3 py-md-5">
+    <h1 class="text-center">Results Page: {{response.data.Page.pageInfo.currentPage}}</h1>
+    <div class="container p-3">
+        <div class="row row-cols-5">
+            {% for media in response.data.Page.media %}
+            <div class="container p-1">
+                <div class="card text-bg-light">
+                    <img src={{media.coverImage.large}} class="img-fluid border border-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">{{media.title.native}}</h5>
+                        {% if media.title.english %}
+                        <h5 class="card-title">{{media.title.english}}</h5>
+                        {% endif %}
+                        <a href="/manga/{{media.id}}" class="btn btn-primary">Manga Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
     <br>
-    {% endfor %}
-    {% if response.data.Page.pageInfo.currentPage > 1 %}
-    <a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage - 1}}" class="btn btn-primary">Previous Page</a>
-    {% endif %}
+    <div class="d-flex justify-content-center container d-inline">
+        {% if response.data.Page.pageInfo.currentPage > 1 %}
+        <div class="p-3">
+            <a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage - 1}}"
+                class="btn btn-primary">Previous Page</a>
+        </div>
+        {% endif %}
 
-    {% if response.data.Page.pageInfo.hasNextPage == true %}
-<a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage + 1}}" class="btn btn-primary">Next Page</a>
-{% else %}
-<p>No more results!</p>
-{% endif %}
+        {% if response.data.Page.pageInfo.hasNextPage == true %}
+        <div class="p-3">
+            <a href="/queryresults?query={{querytext}}&page={{response.data.Page.pageInfo.currentPage + 1}}"
+                class="btn btn-primary">Next Page</a>
+        </div>
+        {% else %}
+        <div class="p-3">
+            <p class="text-center align middle">No more results!</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
 
 {% endblock %}
