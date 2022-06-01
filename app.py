@@ -433,7 +433,7 @@ def update_review(manga_id):
     else:
         return render_template("manga/review.html",manga=manga, form=form)
 
-@app.route("/manga/<manga_id>/review/delete", methods=["GET","POST"])
+@app.route("/manga/<manga_id>/review/delete", methods=["POST"])
 def delete_review(manga_id):
     if "username" not in session:
         flash(f"Please login to delete reviews","danger")
@@ -453,7 +453,7 @@ def delete_review(manga_id):
     flash(f"Review deleted","success")
     return redirect(f"/manga/{manga_id}")
 
-@app.route("/manga/<manga_id>/bookmark/delete", methods=["POST","DELETE"])
+@app.route("/manga/<manga_id>/bookmark/delete", methods=["POST"])
 def delete_bookmark(manga_id):
     if "username" not in session:
         flash(f"Please login to delete bookmarks","danger")
@@ -470,7 +470,7 @@ def delete_bookmark(manga_id):
     db.session.commit()
     
     flash(f"Bookmark deleted","success")
-    return redirect(f"/manga/{manga_id}")
+    return redirect(f"/")
 
 @app.route('/manga/<int:manga_id>/favorite',  methods=["GET","POST"])
 def handle_favorite(manga_id):

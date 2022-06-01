@@ -62,50 +62,49 @@
         <div class="col-sm-auto">
           <button class="btn btn-primary" type="submit">Submit</button>
         </div>
-        <div class="col-sm-auto">
-          <form>
-            <button formaction="/manga/{{manga.id}}/bookmark/delete" formmethod="POST"
-              class="btn btn-primary">Delete Bookmark</button>
-          </form>
-        </div>
-      </div>
     </form>
-  </div>
-  <hr>
-  {% endif %}
-  <div class="d-flex justify-content-center container p-3 d-inline">
-    <div class="p-3">
-      <a href="/manga/{{ manga.id }}/favorite" class="btn btn-primary">Favorite</a>
-    </div>
-    <div class="p-3">
-      <a href="/manga/{{ manga.id }}/review" class="btn btn-primary">Click here to submit a review!</a>
+    <div class="col-sm-auto">
+      <form>
+        <button formaction="/manga/{{manga.id}}/bookmark/delete" formmethod="POST" class="btn btn-primary">Delete
+          Bookmark</button>
+      </form>
     </div>
   </div>
+</div>
+<hr>
+{% endif %}
+<div class="d-flex justify-content-center container p-3 d-inline">
+  <div class="p-3">
+    <a href="/manga/{{ manga.id }}/favorite" class="btn btn-primary">Favorite</a>
+  </div>
+  <div class="p-3">
+    <a href="/manga/{{ manga.id }}/review" class="btn btn-primary">Click here to submit a review!</a>
+  </div>
+</div>
+<div>
+  <h2>Reviews</h2>
+  {% for review in manga.reviews %}
   <div>
-    <h2>Reviews</h2>
-    {% for review in manga.reviews %}
-    <div>
-      <h4>{{review.title}}</h4>
-      <h5>Rating: {{review.rating}}/5</h5>
-      <h6>by {{review.user.username}}</h6>
-      <p style="white-space: pre-wrap;  word-wrap: break-word;">{{review.content|safe}}</p>
-      {% if review.user.username == session['username'] %}
-      <div class="row">
-        <div class="col-sm-auto"><a href="/manga/{{review.manga_id}}/review/update" class="btn btn-primary">Edit
-            Review</a>
-        </div>
-        <div class="col-sm-auto">
-          <form>
-            <button formaction="/manga/{{review.manga_id}}/review/delete" formmethod="POST"
-              class="btn btn-primary">Delete
-              Review</button>
-          </form>
-        </div>
+    <h4>{{review.title}}</h4>
+    <h5>Rating: {{review.rating}}/5</h5>
+    <h6>by {{review.user.username}}</h6>
+    <p style="white-space: pre-wrap;  word-wrap: break-word;">{{review.content|safe}}</p>
+    {% if review.user.username == session['username'] %}
+    <div class="row">
+      <div class="col-sm-auto"><a href="/manga/{{review.manga_id}}/review/update" class="btn btn-primary">Edit
+          Review</a>
       </div>
-      {% endif %}
+      <div class="col-sm-auto">
+        <form>
+          <button formaction="/manga/{{review.manga_id}}/review/delete" formmethod="POST" class="btn btn-primary">Delete
+            Review</button>
+        </form>
+      </div>
     </div>
-    {% endfor %}
+    {% endif %}
   </div>
+  {% endfor %}
+</div>
 
 </div>
 
